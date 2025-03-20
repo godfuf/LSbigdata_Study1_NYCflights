@@ -44,7 +44,7 @@ carrier_total_count = merge_df.pivot_table(
     values='year_x',
     aggfunc='count'
 ).reset_index()
-carrier_total_count.sort_values(by='year_x',ascending=False)
+carrier_total_count_sorted = carrier_total_count.sort_values(by='year_x',ascending=False)
 
 big_carrier = pd.merge(airport_count, carrier_total_count, on='carrier', how='outer')  #1, 2번 합침
 
@@ -86,3 +86,75 @@ total_seat_unique_sorted
 carrier_type = merge_df.groupby(['carrier', 'type'])['tailnum'].nunique().reset_index()
 carrier_type .rename(columns={'tailnum': 'plane_count'}, inplace=True)
 carrier_type 
+
+# 그래프 한글 깨짐 방지
+plt.rcParams['font.family'] = 'Malgun Gothic'
+# 음수 기호 깨짐 방지
+plt.rcParams['axes.unicode_minus'] = False
+
+
+# 운항 횟수(bar chart)
+plt.figure(figsize=(10, 6))
+plt.bar(carrier_total_count_sorted['carrier'], carrier_total_count_sorted['year_x'],
+        color='skyblue', edgecolor='black', alpha=0.8)
+plt.xlabel('항공사')
+plt.ylabel('항공편 수')
+plt.title('항공사별 운항 횟수')
+plt.xticks(rotation=45)
+plt.show()
+
+# 총 비행 거리(bar chart)
+plt.figure(figsize=(10, 6))
+plt.bar(total_distance_sorted['carrier'], total_distance_sorted['distance'],
+        color='salmon', edgecolor='black', alpha=0.8)
+plt.xlabel('항공사')
+plt.ylabel('총 비행 거리')
+plt.title('항공사별 총 비행 거리')
+plt.xticks(rotation=45)
+plt.show()
+
+# 총 좌석 수(bar chart)
+plt.figure(figsize=(10, 6))
+plt.bar(total_seat_unique_sorted['carrier'], total_seat_unique_sorted['seats'],
+        color='lightgreen', edgecolor='black', alpha=0.8)
+plt.xlabel('항공사')
+plt.ylabel('총 좌석 수')
+plt.title('항공사별 총 항공기 좌석 수')
+plt.xticks(rotation=45)
+plt.show()
+
+carrier_type_pivot = carrier_type.pivot(index='carrier', columns='type', values='plane_count').fillna(0)
+
+plt.figure(figsize=(12, 8))
+carrier_type_pivot.plot(kind='bar', stacked=True)
+plt.xlabel('항공사')
+plt.ylabel('보유 항공기 수')
+plt.title('항공사별 항공기 타입별 보유 개수')
+plt.xticks(rotation=45)
+plt.legend(title='항공기 타입', bbox_to_anchor=(1.05, 1), loc='upper left')
+plt.tight_layout()
+plt.show()
+
+table_sort = merge_df.pivot_table(
+    index='carrier', 
+    values='tailnum',
+    aggfunc='nunique'
+).reset_index().rename(columns={'tailnum': 'aircraft_count'})
+
+# 기존의 big_carrier2와 table_sort를 병합하여 big_carrier3 생성
+big_carrier3 = pd.merge(big_carrier2, table_sort, on='carrier', how='outer')
+plt.figure(figsize=(10, 6))
+plt.bar(big_carrier3['carrier'], big_carrier3['aircraft_count'],
+        color='skyblue', alpha=0.7, edgecolor='black')
+plt.xlabel('항공사')
+plt.ylabel('보유 항공기 수')
+plt.title('항공사별 보유 항공기 수 (고유 tailnum 개수)')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+
+
+# 주제2. 규모가 큰 항공사는 지연률이 낮을까, 아니면 높을까?
+# 1. 각 항공사별 평균 지연 시간, 지연 편수 비율(정시운항 비율) 비교
+# 2. 항공사 규모에 따른 지연률 상관 또는 추세 살펴보기
+# 규모가 큰 항공사가 많은 자본으로 인력, 관리가 좋아 지연이 적을지, 아니면 반대로 규모때문에 관리가 더 어려워 지연이 잦을지 유추
